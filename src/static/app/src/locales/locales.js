@@ -2,6 +2,6 @@
 
 const messages = {
     en: {
-        WGDashboard: 'WGDashboard',
+        WGDashboard: 'WGDashboarDD',
     },
 }
