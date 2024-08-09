@@ -633,9 +633,9 @@ class WireguardConfiguration:
             subprocess.check_output(f"wg set {self.Name} peer {p['id']} allowed-ips {p['allowed_ip']}", 
                                     shell=True, stderr=subprocess.STDOUT)
         subprocess.check_output(
-            f"awg-quick save {self.Name}", shell=True, stderr=subprocess.STDOUT)    
+            f"wg-quick save {self.Name}", shell=True, stderr=subprocess.STDOUT)
         self.getPeersList()
-        
+
     def searchPeer(self, publicKey):
         for i in self.Peers:
             if i.id == publicKey:
@@ -647,7 +647,7 @@ class WireguardConfiguration:
         # numOfFailedToAllowPeers = 0
         if not self.getStatus():
             self.toggleConfiguration()
-        
+
         for i in listOfPublicKeys:
             p = sqldb.cursor().execute("SELECT * FROM %s_restrict_access WHERE id = ?" % self.Name, (i,)).fetchone()
             if p is not None:
@@ -740,7 +740,7 @@ class WireguardConfiguration:
 
     def __wgSave(self) -> tuple[bool, str] | tuple[bool, None]:
         try:
-            subprocess.check_output(f"awg-quick save {self.Name}", shell=True, stderr=subprocess.STDOUT)
+            subprocess.check_output(f"wg-quick save {self.Name}", shell=True, stderr=subprocess.STDOUT)
             return True, None
         except subprocess.CalledProcessError as e:
             return False, str(e)
@@ -833,13 +833,13 @@ class WireguardConfiguration:
         self.getStatus()
         if self.Status:
             try:
-                check = subprocess.check_output(f"awg-quick down {self.Name}",
+                check = subprocess.check_output(f"wg-quick down {self.Name}",
                                                 shell=True, stderr=subprocess.STDOUT)
             except subprocess.CalledProcessError as exc:
                 return False, str(exc.output.strip().decode("utf-8"))
         else:
             try:
-                check = subprocess.check_output(f"awg-quick up {self.Name}",
+                check = subprocess.check_output(f"wg-quick up {self.Name}",
                                                 shell=True, stderr=subprocess.STDOUT)
             except subprocess.CalledProcessError as exc:
                 return False, str(exc.output.strip().decode("utf-8"))
@@ -956,7 +956,7 @@ class Peer:
             if len(updateAllowedIp.decode().strip("\n")) != 0:
                 return ResponseObject(False,
                                       "Update peer failed when updating allowed IPs")
-            saveConfig = subprocess.check_output(f"awg-quick save {self.configuration.Name}",
+            saveConfig = subprocess.check_output(f"wg-quick save {self.configuration.Name}",
                                                  shell=True, stderr=subprocess.STDOUT)
             if f"wg showconf {self.configuration.Name}" not in saveConfig.decode().strip('\n'):
                 return ResponseObject(False,
@@ -1010,7 +1010,7 @@ PersistentKeepalive = {str(self.keepalive)}
 
     def getShareLink(self):
         self.ShareLink = AllPeerShareLinks.getLink(self.configuration.Name, self.id)
-        
+
     def resetDataUsage(self, type):
         try:
             if type == "total":
@@ -1024,8 +1024,8 @@ PersistentKeepalive = {str(self.keepalive)}
         except Exception as e:
             return False
         return True
-    
-            
+
+
 # Regex Match
 def regex_match(regex, text):
     pattern = re.compile(regex)
@@ -1041,7 +1041,7 @@ class DashboardAPIKey:
         self.Key = Key
         self.CreatedAt = CreatedAt
         self.ExpiredAt = ExpiredAt
-    
+
     def toJson(self):
         return self.__dict__
 
@@ -1092,33 +1092,33 @@ class DashboardConfig:
                     self.SetConfig(section, key, value, True)
         self.__createAPIKeyTable()
         self.DashboardAPIKeys = self.__getAPIKeys()
-    
+
     def __createAPIKeyTable(self):
         existingTable = sqldb.cursor().execute("SELECT name FROM sqlite_master WHERE type='table' AND name = 'DashboardAPIKeys'").fetchall()
         if len(existingTable) == 0:
             sqldb.cursor().execute("CREATE TABLE DashboardAPIKeys (Key VARCHAR NOT NULL PRIMARY KEY, CreatedAt DATETIME NOT NULL DEFAULT (datetime('now', 'localtime')), ExpiredAt VARCHAR)")
             sqldb.commit()
-    
+
     def __getAPIKeys(self) -> list[DashboardAPIKey]:
         keys = sqldb.cursor().execute("SELECT * FROM DashboardAPIKeys WHERE ExpiredAt IS NULL OR ExpiredAt > datetime('now', 'localtime') ORDER BY CreatedAt DESC").fetchall()
         fKeys = []
         for k in keys:
             fKeys.append(DashboardAPIKey(*k))
         return fKeys
-    
+
     def createAPIKeys(self, ExpiredAt = None):
         newKey = secrets.token_urlsafe(32)
         sqldb.cursor().execute('INSERT INTO DashboardAPIKeys (Key, ExpiredAt) VALUES (?, ?)', (newKey, ExpiredAt,))
         sqldb.commit()
         self.DashboardAPIKeys = self.__getAPIKeys()
-        
+
     def deleteAPIKey(self, key):
         sqldb.cursor().execute("UPDATE DashboardAPIKeys SET ExpiredAt = datetime('now', 'localtime') WHERE Key = ?", (key, ))
         sqldb.commit()
         self.DashboardAPIKeys = self.__getAPIKeys()
-    
-    
-    
+
+
+
     def __configValidation(self, key, value: Any) -> [bool, str]:
         if type(value) is str and len(value) == 0:
             return False, "Field cannot be empty!"
@@ -1350,8 +1350,8 @@ def auth_req():
             DashboardLogger.log(str(request.url), str(request.remote_addr), Message=str(request.args))
         elif str(request.method) == "POST":
             DashboardLogger.log(str(request.url), str(request.remote_addr), Message=f"Request Args: {str(request.args)} Body:{str(request.get_json())}")
-        
-    
+
+
     authenticationRequired = DashboardConfig.GetConfig("Server", "auth_req")[1]
     d = request.headers
     if authenticationRequired:
@@ -1551,7 +1551,7 @@ def API_deleteDashboardAPIKey():
             DashboardConfig.deleteAPIKey(data['Key'])
             return ResponseObject(True, data=DashboardConfig.DashboardAPIKeys)
     return ResponseObject(False, "Dashboard API Keys function is disbaled")
-    
+
 
 @app.route('/api/updatePeerSettings/<configName>', methods=['POST'])
 def API_updatePeerSettings(configName):
@@ -1585,7 +1585,7 @@ def API_resetPeerData(configName):
     if not foundPeer:
         return ResponseObject(False, "Configuration/Peer does not exist")
     return ResponseObject(status=peer.resetDataUsage(type))
-    
+
 
 
 @app.route('/api/deletePeers/<configName>', methods=['POST'])
@@ -1635,13 +1635,13 @@ def API_sharePeer_update():
     ExpireDate: str = data.get("ExpireDate")
     print(ShareID)
     print(ExpireDate)
-    
+
     if ShareID is None:
         return ResponseObject(False, "Please specify ShareID")
-    
+
     if len(AllPeerShareLinks.getLinkByID(ShareID)) == 0:
         return ResponseObject(False, "ShareID does not exist")
-    
+
     status, message = AllPeerShareLinks.updateLinkExpireDate(ShareID, ExpireDate)
     if not status:
         return ResponseObject(status, message)
@@ -1663,10 +1663,10 @@ def API_sharePeer_get():
     fp, p = c.searchPeer(l.Peer)
     if not fp:
         return ResponseObject(False, "The peer you're looking for does not exist")
-    
+
     return ResponseObject(data=p.downloadPeer())
-    
-    
+
+
 
 @app.route('/api/allowAccessPeers/<configName>', methods=['POST'])
 def API_allowAccessPeers(configName: str) -> ResponseObject:
@@ -1722,7 +1722,7 @@ def API_addPeers(configName):
             if len(keyPairs) == 0:
                 return ResponseObject(False, "Generating key pairs by bulk failed")
             config.addPeers(keyPairs)
-            
+
             for kp in keyPairs:
                 found, peer = config.searchPeer(kp['id'])
                 if found:
@@ -1745,7 +1745,7 @@ def API_addPeers(configName):
             #         f"wg set {config.Name} peer {public_key} preshared-key {preshared_key}",
             #         shell=True, stderr=subprocess.STDOUT)
             # subprocess.check_output(
-            #     f"awg-quick save {config.Name}", shell=True, stderr=subprocess.STDOUT)
+            #     f"wg-quick save {config.Name}", shell=True, stderr=subprocess.STDOUT)
             # config.getPeersList()
             found, peer = config.searchPeer(public_key)
             if found:
