@@ -85,7 +85,7 @@ export default {
 	<div class="container-fluid login-container-fluid d-flex main flex-column" :data-bs-theme="this.theme">
 		<div class="login-box m-auto" style="width: 500px;">
 			<h4 class="mb-0 text-body">Welcome to</h4>
-			<span class="dashboardLogo display-3">WGDashboard</span>
+			<span class="dashboardLogo display-3">{{ $t('WGDashboard') }}</span>
 			<div class="m-auto">
 				<div class="alert alert-danger mt-2 mb-0" role="alert" v-if="loginError">
 					{{this.loginErrorMessage}}
@@ -129,7 +129,7 @@ export default {
 			</div>
 		</div>
 		<small class="text-muted pb-3 d-block w-100 text-center">
-			WGDashboard v4.0 | Developed with ❤️ by 
+			{{ $t('WGDashboard') }} v4.0 | Developed with ❤️ by
 			<a href="https://github.com/donaldzou" target="_blank"><strong>Donald Zou</strong></a>
 		</small>
 		<div class="messageCentre text-body position-absolute end-0 margin-3">

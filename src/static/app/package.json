@@ -27,7 +27,8 @@
     "uuid": "^9.0.1",
     "vue": "^3.4.29",
     "vue-chartjs": "^5.3.0",
-    "vue-router": "^4.2.5"
+    "vue-router": "^4.2.5",
+    "vue-i18n": "npm:@vue-i18n-nightly"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.0",
