@@ -633,7 +633,7 @@ class WireguardConfiguration:
             subprocess.check_output(f"wg set {self.Name} peer {p['id']} allowed-ips {p['allowed_ip']}", 
                                     shell=True, stderr=subprocess.STDOUT)
         subprocess.check_output(
-            f"wg-quick save {self.Name}", shell=True, stderr=subprocess.STDOUT)    
+            f"awg-quick save {self.Name}", shell=True, stderr=subprocess.STDOUT)    
         self.getPeersList()
         
     def searchPeer(self, publicKey):
@@ -740,7 +740,7 @@ class WireguardConfiguration:
 
     def __wgSave(self) -> tuple[bool, str] | tuple[bool, None]:
         try:
-            subprocess.check_output(f"wg-quick save {self.Name}", shell=True, stderr=subprocess.STDOUT)
+            subprocess.check_output(f"awg-quick save {self.Name}", shell=True, stderr=subprocess.STDOUT)
             return True, None
         except subprocess.CalledProcessError as e:
             return False, str(e)
@@ -833,13 +833,13 @@ class WireguardConfiguration:
         self.getStatus()
         if self.Status:
             try:
-                check = subprocess.check_output(f"wg-quick down {self.Name}",
+                check = subprocess.check_output(f"awg-quick down {self.Name}",
                                                 shell=True, stderr=subprocess.STDOUT)
             except subprocess.CalledProcessError as exc:
                 return False, str(exc.output.strip().decode("utf-8"))
         else:
             try:
-                check = subprocess.check_output(f"wg-quick up {self.Name}",
+                check = subprocess.check_output(f"awg-quick up {self.Name}",
                                                 shell=True, stderr=subprocess.STDOUT)
             except subprocess.CalledProcessError as exc:
                 return False, str(exc.output.strip().decode("utf-8"))
@@ -956,7 +956,7 @@ class Peer:
             if len(updateAllowedIp.decode().strip("\n")) != 0:
                 return ResponseObject(False,
                                       "Update peer failed when updating allowed IPs")
-            saveConfig = subprocess.check_output(f"wg-quick save {self.configuration.Name}",
+            saveConfig = subprocess.check_output(f"awg-quick save {self.configuration.Name}",
                                                  shell=True, stderr=subprocess.STDOUT)
             if f"wg showconf {self.configuration.Name}" not in saveConfig.decode().strip('\n'):
                 return ResponseObject(False,
@@ -1745,7 +1745,7 @@ def API_addPeers(configName):
             #         f"wg set {config.Name} peer {public_key} preshared-key {preshared_key}",
             #         shell=True, stderr=subprocess.STDOUT)
             # subprocess.check_output(
-            #     f"wg-quick save {config.Name}", shell=True, stderr=subprocess.STDOUT)
+            #     f"awg-quick save {config.Name}", shell=True, stderr=subprocess.STDOUT)
             # config.getPeersList()
             found, peer = config.searchPeer(public_key)
             if found:
