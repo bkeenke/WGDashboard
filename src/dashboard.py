@@ -1063,14 +1063,14 @@ def switch(config_name):
     status = get_conf_status(config_name)
     if status == "running":
         try:
-            check = subprocess.check_output("wg-quick down " + config_name,
+            check = subprocess.check_output("awg-quick down " + config_name,
                                             shell=True, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as exc:
             session["switch_msg"] = exc.output.strip().decode("utf-8")
             return redirect('/')
     elif status == "stopped":
         try:
-            subprocess.check_output("wg-quick up " + config_name,
+            subprocess.check_output("awg-quick up " + config_name,
                                     shell=True, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as exc:
             session["switch_msg"] = exc.output.strip().decode("utf-8")
@@ -1132,7 +1132,7 @@ def add_peer_bulk(config_name):
         sql_command.append(update)
     try:
         status = subprocess.check_output(" ".join(wg_command), shell=True, stderr=subprocess.STDOUT)
-        status = subprocess.check_output("wg-quick save " + config_name, shell=True, stderr=subprocess.STDOUT)
+        status = subprocess.check_output("awg-quick save " + config_name, shell=True, stderr=subprocess.STDOUT)
         get_all_peers_data(config_name)
         if enable_preshared_key:
             for i in keys:
@@ -1193,7 +1193,7 @@ def add_peer(config_name):
         elif not enable_preshared_key:
             status = subprocess.check_output(f"wg set {config_name} peer {public_key} allowed-ips {allowed_ips}",
                                              shell=True, stderr=subprocess.STDOUT)
-        status = subprocess.check_output("wg-quick save " + config_name, shell=True, stderr=subprocess.STDOUT)
+        status = subprocess.check_output("awg-quick save " + config_name, shell=True, stderr=subprocess.STDOUT)
         get_all_peers_data(config_name)
         sql = "UPDATE " + config_name + " SET name = ?, private_key = ?, DNS = ?, endpoint_allowed_ip = ? WHERE id = ?"
         g.cur.execute(sql, (data['name'], data['private_key'], data['DNS'], endpoint_allowed_ip, public_key))
@@ -1232,7 +1232,7 @@ def remove_peer(config_name):
         try:
             remove_wg = subprocess.check_output(" ".join(wg_command),
                                                 shell=True, stderr=subprocess.STDOUT)
-            save_wg = subprocess.check_output(f"wg-quick save {config_name}", shell=True, stderr=subprocess.STDOUT)
+            save_wg = subprocess.check_output(f"awg-quick save {config_name}", shell=True, stderr=subprocess.STDOUT)
             g.cur.executescript(' '.join(sql_command))
             g.db.commit()
         except subprocess.CalledProcessError as exc:
@@ -1288,7 +1288,7 @@ def save_peer_setting(config_name):
             allowed_ip = allowed_ip.replace(" ", "")
             change_ip = subprocess.check_output(f"wg set {config_name} peer {id} allowed-ips {allowed_ip}",
                                                 shell=True, stderr=subprocess.STDOUT)
-            subprocess.check_output(f'wg-quick save {config_name}', shell=True, stderr=subprocess.STDOUT)
+            subprocess.check_output(f'awg-quick save {config_name}', shell=True, stderr=subprocess.STDOUT)
             if change_ip.decode("UTF-8") != "":
                 return jsonify({"status": "failed", "msg": change_ip.decode("UTF-8")})
             sql = "UPDATE " + config_name + " SET name = ?, private_key = ?, DNS = ?, endpoint_allowed_ip = ?, mtu = ?, keepalive = ?, preshared_key = ? WHERE id = ?"
